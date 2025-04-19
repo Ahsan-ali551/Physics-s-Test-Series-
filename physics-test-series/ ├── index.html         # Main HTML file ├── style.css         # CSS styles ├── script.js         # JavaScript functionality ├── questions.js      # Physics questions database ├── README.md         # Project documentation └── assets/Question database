@@ -1,0 +1,206 @@
+const physicsQuestions = [
+    {
+        topic: "Mechanics",
+        question: "What is the SI unit of force?",
+        options: ["Joule", "Newton", "Watt", "Pascal"],
+        answer: 1,
+        difficulty: "Easy"
+    },
+    {
+        topic: "Thermodynamics",
+        question: "The first law of thermodynamics is a version of which fundamental principle?",
+        options: [
+            "Conservation of mass",
+            "Conservation of energy",
+            "Conservation of momentum",
+            "Conservation of charge"
+        ],
+        answer: 1,
+        difficulty: "Medium"
+    },
+    {
+        topic: "Electromagnetism",
+        question: "Which of the following materials is the best conductor of electricity?",
+        options: ["Copper", "Silver", "Gold", "Aluminum"],
+        answer: 1,
+        difficulty: "Easy"
+    },
+    {
+        topic: "Optics",
+        question: "The refractive index of a medium is highest for which color of light?",
+        options: ["Red", "Green", "Blue", "Violet"],
+        answer: 3,
+        difficulty: "Hard"
+    },
+    {
+        topic: "Modern Physics",
+        question: "Which phenomenon demonstrates the particle nature of light?",
+        options: [
+            "Interference",
+            "Diffraction",
+            "Photoelectric effect",
+            "Polarization"
+        ],
+        answer: 2,
+        difficulty: "Medium"
+    }
+    // Add more questions as needed
+];
+// DOM Elements
+const questionElement = document.getElementById('question');
+const optionsElement = document.querySelector('.options');
+const topicElement = document.getElementById('topic');
+const scoreElement = document.getElementById('score');
+const timeElement = document.getElementById('time');
+const prevButton = document.getElementById('prev-btn');
+const nextButton = document.getElementById('next-btn');
+const submitButton = document.getElementById('submit-btn');
+
+// Quiz State
+let currentQuestionIndex = 0;
+let score = 0;
+let timer;
+let timeLeft = 60;
+let selectedOption = null;
+let userAnswers = Array(physicsQuestions.length).fill(null);
+
+// Initialize Quiz
+function initQuiz() {
+    showQuestion();
+    startTimer();
+}
+
+// Display Question
+function showQuestion() {
+    const currentQuestion = physicsQuestions[currentQuestionIndex];
+    questionElement.textContent = currentQuestion.question;
+    topicElement.textContent = `Topic: ${currentQuestion.topic} (${currentQuestion.difficulty})`;
+    
+    optionsElement.innerHTML = '';
+    currentQuestion.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.classList.add('option');
+        button.addEventListener('click', () => selectOption(index));
+        
+        // Highlight if already answered
+        if (userAnswers[currentQuestionIndex] === index) {
+            button.classList.add('selected');
+            if (index === currentQuestion.answer) {
+                button.classList.add('correct');
+            } else {
+                button.classList.add('incorrect');
+            }
+        }
+        
+        optionsElement.appendChild(button);
+    });
+    
+    updateNavigationButtons();
+}
+
+// Select Option
+function selectOption(index) {
+    if (userAnswers[currentQuestionIndex] !== null) return;
+    
+    const currentQuestion = physicsQuestions[currentQuestionIndex];
+    const options = document.querySelectorAll('.option');
+    
+    userAnswers[currentQuestionIndex] = index;
+    
+    options.forEach((option, i) => {
+        option.classList.remove('selected');
+        if (i === currentQuestion.answer) {
+            option.classList.add('correct');
+        } else if (i === index && i !== currentQuestion.answer) {
+            option.classList.add('incorrect');
+        }
+    });
+    
+    if (index === currentQuestion.answer) {
+        score++;
+        scoreElement.textContent = `Score: ${score}`;
+    }
+}
+
+// Navigation Functions
+function nextQuestion() {
+    if (currentQuestionIndex < physicsQuestions.length - 1) {
+        currentQuestionIndex++;
+        resetTimer();
+        showQuestion();
+    }
+}
+
+function prevQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        resetTimer();
+        showQuestion();
+    }
+}
+
+function updateNavigationButtons() {
+    prevButton.disabled = currentQuestionIndex === 0;
+    nextButton.disabled = currentQuestionIndex === physicsQuestions.length - 1;
+}
+
+// Timer Functions
+function startTimer() {
+    clearInterval(timer);
+    timeLeft = 60;
+    timeElement.textContent = timeLeft;
+    
+    timer = setInterval(() => {
+        timeLeft--;
+        timeElement.textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            if (currentQuestionIndex < physicsQuestions.length - 1) {
+                nextQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+    }, 1000);
+}
+
+function resetTimer() {
+    clearInterval(timer);
+    startTimer();
+}
+
+// End Quiz
+function endQuiz() {
+    clearInterval(timer);
+    questionElement.textContent = `Quiz Completed! Your score: ${score}/${physicsQuestions.length}`;
+    optionsElement.innerHTML = '';
+    document.querySelector('.quiz-header').style.display = 'none';
+    document.querySelector('.controls').style.display = 'none';
+    
+    // Show review of answers
+    const review = document.createElement('div');
+    review.innerHTML = '<h3>Answer Review:</h3>';
+    
+    physicsQuestions.forEach((q, i) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.innerHTML = `
+            <p><strong>Q${i + 1}:</strong> ${q.question}</p>
+            <p>Your answer: ${userAnswers[i] !== null ? q.options[userAnswers[i]] : 'Not answered'}</p>
+            <p>Correct answer: ${q.options[q.answer]}</p>
+            <hr>
+        `;
+        review.appendChild(questionDiv);
+    });
+    
+    optionsElement.appendChild(review);
+}
+
+// Event Listeners
+nextButton.addEventListener('click', nextQuestion);
+prevButton.addEventListener('click', prevQuestion);
+submitButton.addEventListener('click', endQuiz);
+
+// Start the quiz
+initQuiz();
